@@ -67,25 +67,31 @@ DENSITY = {k: v["density"] for k, v in COMPOSITION.items()}
 
 def build_materials(mat_key: str) -> tuple[openmc.Materials, openmc.Material, openmc.Material]:
     """Tao danh sach vat lieu gom Lead (Chi) va Mau thuy tinh (neu khong phai Blank)."""
-    # Chi (Lead) cho ong chuan truc va vo chan ngoai
-    pb = openmc.Material(name="Lead")
-    pb.add_element("Pb", 1.0)
-    pb.set_density("g/cm3", 11.34)
+    # Tam thoi bo qua OPENMC_CROSS_SECTIONS de add_element su dung bang dong vi tu nhien noi bo
+    old_xs = os.environ.pop("OPENMC_CROSS_SECTIONS", None)
+    try:
+        # Chi (Lead) cho ong chuan truc va vo chan ngoai
+        pb = openmc.Material(name="Lead")
+        pb.add_element("Pb", 1.0)
+        pb.set_density("g/cm3", 11.34)
 
-    sample_mat = None
-    mats_list = [pb]
+        sample_mat = None
+        mats_list = [pb]
 
-    mat_k = mat_key.lower()
-    if mat_k != "blank" and mat_k in COMPOSITION:
-        prop = COMPOSITION[mat_k]
-        sample_mat = openmc.Material(name=mat_k.upper())
-        sample_mat.set_density("g/cm3", prop["density"])
-        for el, frac in prop["comp"].items():
-            sample_mat.add_element(el, frac, percent_type="wo")
-        mats_list.append(sample_mat)
+        mat_k = mat_key.lower()
+        if mat_k != "blank" and mat_k in COMPOSITION:
+            prop = COMPOSITION[mat_k]
+            sample_mat = openmc.Material(name=mat_k.upper())
+            sample_mat.set_density("g/cm3", prop["density"])
+            for el, frac in prop["comp"].items():
+                sample_mat.add_element(el, frac, percent_type="wo")
+            mats_list.append(sample_mat)
 
-    materials = openmc.Materials(mats_list)
-    return materials, pb, sample_mat
+        materials = openmc.Materials(mats_list)
+        return materials, pb, sample_mat
+    finally:
+        if old_xs is not None:
+            os.environ["OPENMC_CROSS_SECTIONS"] = old_xs
 
 
 def build_geometry(thickness_cm: float, pb_mat: openmc.Material, sample_mat: openmc.Material = None):
@@ -204,12 +210,17 @@ def export_openmc_model(output_dir: str, mat_key: str, energy_kev: float, thickn
     out_path = Path(output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
 
-    materials, pb_mat, sample_mat = build_materials(mat_key)
-    geometry, detector_cell = build_geometry(thickness_cm, pb_mat, sample_mat)
-    settings = build_settings(energy_kev, n_particles, n_batches)
-    tallies = build_tallies(detector_cell, energy_kev)
+    old_xs = os.environ.pop("OPENMC_CROSS_SECTIONS", None)
+    try:
+        materials, pb_mat, sample_mat = build_materials(mat_key)
+        geometry, detector_cell = build_geometry(thickness_cm, pb_mat, sample_mat)
+        settings = build_settings(energy_kev, n_particles, n_batches)
+        tallies = build_tallies(detector_cell, energy_kev)
 
-    materials.export_to_xml(out_path / "materials.xml")
-    geometry.export_to_xml(out_path / "geometry.xml")
-    settings.export_to_xml(out_path / "settings.xml")
-    tallies.export_to_xml(out_path / "tallies.xml")
+        materials.export_to_xml(out_path / "materials.xml")
+        geometry.export_to_xml(out_path / "geometry.xml")
+        settings.export_to_xml(out_path / "settings.xml")
+        tallies.export_to_xml(out_path / "tallies.xml")
+    finally:
+        if old_xs is not None:
+            os.environ["OPENMC_CROSS_SECTIONS"] = old_xs
