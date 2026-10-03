@@ -59,10 +59,8 @@ jobs:
         env:
           GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
           GDRIVE_FOLDER_ID: ${{ github.event.inputs.gdrive_folder }}
-          OPENMC_CROSS_SECTIONS: /tmp/nuclear_data/cross_sections.xml
         run: |
           export PATH="/tmp/openmc_env/bin:$PATH"
-          export OPENMC_CROSS_SECTIONS="/tmp/nuclear_data/cross_sections.xml"
           /tmp/openmc_env/bin/python -u run_openmc_task.py \
             --runner-id ${{ matrix.runner_id }} \
             --num-runners 20 \

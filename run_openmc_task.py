@@ -21,6 +21,10 @@ except Exception:
     pass
 
 import openmc
+try:
+    openmc.config['cross_sections'] = None
+except Exception:
+    pass
 from openmc_model import export_openmc_model, COMPOSITION, DENSITY
 import gdrive_helper
 
@@ -38,8 +42,13 @@ def parse_args():
 
 def run_openmc_simulation(job_dir: Path, openmc_bin: str = "openmc"):
     t0 = time.time()
-    res = subprocess.run([openmc_bin], cwd=str(job_dir), stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+    env = os.environ.copy()
+    if not env.get("OPENMC_CROSS_SECTIONS"):
+        env["OPENMC_CROSS_SECTIONS"] = "/tmp/nuclear_data/cross_sections.xml"
+    res = subprocess.run([openmc_bin], cwd=str(job_dir), stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True, env=env)
     elapsed = time.time() - t0
+    if res.returncode != 0:
+        print(f"    [OPENMC BIN ERROR]: {res.stderr.strip()[-300:]}", flush=True)
     return res.returncode == 0, elapsed
 
 def parse_statepoint(sp_path: Path):
