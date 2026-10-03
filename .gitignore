@@ -1,0 +1,15 @@
+paper10_nuclear_data.tar.gz
+*.xlsx
+*.csv
+run_sample_*
+run_nosample*
+__pycache__/
+test_*.py
+*.log
+temp_*
+quick_test/
+legacy_suite_v1/
+create_nuclear_package.py
+verify_package.py
+upload_release.py
+get_nuclides.py

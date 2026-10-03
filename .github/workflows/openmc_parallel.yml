@@ -46,21 +46,25 @@ jobs:
           echo ">>> [CHECK] Checking openmc binary..."
           /tmp/openmc_env/bin/openmc -v
 
-      - name: Setup Nuclear Photon Data
+      - name: Setup Nuclear Data
         shell: bash
         run: |
-          echo ">>> [DATA] Unpacking photon data..."
-          mkdir -p /tmp/nuclear_data/photon
-          tar -xzf paper10_photon_data.tar.gz -C /tmp/nuclear_data/photon
-          cp cross_sections.xml /tmp/nuclear_data/cross_sections.xml
-          ls -la /tmp/nuclear_data/photon
+          echo ">>> [DATA] Downloading Paper 10 nuclear data package (137 MB)..."
+          mkdir -p /tmp/nuclear_data
+          curl -sSL -f "https://github.com/haoidlemystic1/openmc-parallel-benchmark/releases/download/v1.0.0/paper10_nuclear_data.tar.gz" -o /tmp/paper10_nuclear_data.tar.gz
+          tar -xzf /tmp/paper10_nuclear_data.tar.gz -C /tmp/nuclear_data
+          echo ">>> [DATA] Verifying nuclear data..."
+          ls -la /tmp/nuclear_data
+          head -n 20 /tmp/nuclear_data/cross_sections.xml
 
       - name: Run OpenMC Worker & Stream to Google Drive
         env:
           GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
           GDRIVE_FOLDER_ID: ${{ github.event.inputs.gdrive_folder }}
+          OPENMC_CROSS_SECTIONS: /tmp/nuclear_data/cross_sections.xml
         run: |
           export PATH="/tmp/openmc_env/bin:$PATH"
+          export OPENMC_CROSS_SECTIONS="/tmp/nuclear_data/cross_sections.xml"
           /tmp/openmc_env/bin/python -u run_openmc_task.py \
             --runner-id ${{ matrix.runner_id }} \
             --num-runners 20 \
