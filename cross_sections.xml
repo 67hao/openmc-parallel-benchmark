@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<cross_sections>
+  <library materials="Li" path="photon/Li.h5" type="photon"/>
+  <library materials="B" path="photon/B.h5" type="photon"/>
+  <library materials="O" path="photon/O.h5" type="photon"/>
+  <library materials="Al" path="photon/Al.h5" type="photon"/>
+  <library materials="Si" path="photon/Si.h5" type="photon"/>
+  <library materials="Ca" path="photon/Ca.h5" type="photon"/>
+  <library materials="Gd" path="photon/Gd.h5" type="photon"/>
+  <library materials="Pb" path="photon/Pb.h5" type="photon"/>
+</cross_sections>
